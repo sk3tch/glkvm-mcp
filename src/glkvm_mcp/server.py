@@ -2,13 +2,12 @@
 
 import json
 import sys
-from typing import Any, Optional
+from typing import Any
 
-from .config import Config
 from .client import KVMClient, KVMClientError
-from .tools import TOOLS, ToolHandler
+from .config import Config
 from .ocr import OCRError
-
+from .tools import TOOLS, ToolHandler
 
 # MCP Protocol version
 PROTOCOL_VERSION = "2024-11-05"
@@ -18,7 +17,7 @@ SERVER_NAME = "glkvm-mcp"
 SERVER_VERSION = "0.1.0"
 
 
-def read_message() -> Optional[dict]:
+def read_message() -> dict | None:
     """Read a JSON-RPC message from stdin."""
     line = sys.stdin.readline()
     if not line:
@@ -69,16 +68,19 @@ class MCPServer:
     def handle_initialize(self, id: Any, params: dict) -> dict:
         """Handle initialize request."""
         self.initialized = True
-        return make_response(id, {
-            "protocolVersion": PROTOCOL_VERSION,
-            "capabilities": {
-                "tools": {},
+        return make_response(
+            id,
+            {
+                "protocolVersion": PROTOCOL_VERSION,
+                "capabilities": {
+                    "tools": {},
+                },
+                "serverInfo": {
+                    "name": SERVER_NAME,
+                    "version": SERVER_VERSION,
+                },
             },
-            "serverInfo": {
-                "name": SERVER_NAME,
-                "version": SERVER_VERSION,
-            },
-        })
+        )
 
     def handle_initialized(self, params: dict) -> None:
         """Handle initialized notification."""
@@ -95,46 +97,58 @@ class MCPServer:
 
         try:
             result = self.tool_handler.handle(name, arguments)
-            return make_response(id, {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": json.dumps(result, indent=2),
-                    }
-                ],
-            })
+            return make_response(
+                id,
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(result, indent=2),
+                        }
+                    ],
+                },
+            )
         except KVMClientError as e:
-            return make_response(id, {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": json.dumps({"error": str(e)}),
-                    }
-                ],
-                "isError": True,
-            })
+            return make_response(
+                id,
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps({"error": str(e)}),
+                        }
+                    ],
+                    "isError": True,
+                },
+            )
         except OCRError as e:
-            return make_response(id, {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": json.dumps({"error": f"OCR error: {e}"}),
-                    }
-                ],
-                "isError": True,
-            })
+            return make_response(
+                id,
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps({"error": f"OCR error: {e}"}),
+                        }
+                    ],
+                    "isError": True,
+                },
+            )
         except Exception as e:
-            return make_response(id, {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": json.dumps({"error": f"Unexpected error: {e}"}),
-                    }
-                ],
-                "isError": True,
-            })
+            return make_response(
+                id,
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps({"error": f"Unexpected error: {e}"}),
+                        }
+                    ],
+                    "isError": True,
+                },
+            )
 
-    def handle_message(self, message: dict) -> Optional[dict]:
+    def handle_message(self, message: dict) -> dict | None:
         """Handle an incoming JSON-RPC message."""
         method = message.get("method")
         id = message.get("id")

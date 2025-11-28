@@ -2,9 +2,8 @@
 
 import os
 from pathlib import Path
-from typing import Optional
-import yaml
 
+import yaml
 
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / "glkvm-mcp" / "config.yaml"
 DEFAULT_CERTS_DIR = Path.home() / ".config" / "glkvm-mcp" / "certs"
@@ -14,7 +13,7 @@ DEFAULT_PORT = 8443
 class Device:
     """Represents a KVM device."""
 
-    def __init__(self, device_id: str, ip: str, port: int = DEFAULT_PORT, name: Optional[str] = None):
+    def __init__(self, device_id: str, ip: str, port: int = DEFAULT_PORT, name: str | None = None):
         self.device_id = device_id
         self.ip = ip
         self.port = port
@@ -38,7 +37,7 @@ class Device:
 class Config:
     """Configuration manager."""
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.config_path = config_path or Path(os.environ.get("GLKVM_CONFIG", DEFAULT_CONFIG_PATH))
         self.certs_dir = Path(os.environ.get("GLKVM_CERTS_DIR", DEFAULT_CERTS_DIR))
         self.default_port = DEFAULT_PORT
@@ -51,7 +50,7 @@ class Config:
         if not self.config_path.exists():
             return
 
-        with open(self.config_path) as f:
+        with self.config_path.open() as f:
             data = yaml.safe_load(f) or {}
 
         # Load certs_dir
@@ -78,20 +77,19 @@ class Config:
         data = {
             "certs_dir": str(self.certs_dir),
             "default_port": self.default_port,
-            "devices": {
-                device_id: device.to_dict()
-                for device_id, device in self.devices.items()
-            },
+            "devices": {device_id: device.to_dict() for device_id, device in self.devices.items()},
         }
 
-        with open(self.config_path, "w") as f:
+        with self.config_path.open("w") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
-    def get_device(self, device_id: str) -> Optional[Device]:
+    def get_device(self, device_id: str) -> Device | None:
         """Get a device by ID."""
         return self.devices.get(device_id)
 
-    def add_device(self, device_id: str, ip: str, port: Optional[int] = None, name: Optional[str] = None) -> Device:
+    def add_device(
+        self, device_id: str, ip: str, port: int | None = None, name: str | None = None
+    ) -> Device:
         """Add a new device."""
         device = Device(
             device_id=device_id,

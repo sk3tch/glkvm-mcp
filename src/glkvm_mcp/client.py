@@ -2,16 +2,16 @@
 
 import json
 import ssl
-import urllib.request
 import urllib.error
-from pathlib import Path
-from typing import Optional, Any
+import urllib.request
+from typing import Any
 
 from .config import Config, Device
 
 
 class KVMClientError(Exception):
     """Error communicating with KVM device."""
+
     pass
 
 
@@ -20,7 +20,7 @@ class KVMClient:
 
     def __init__(self, config: Config):
         self.config = config
-        self._ssl_context: Optional[ssl.SSLContext] = None
+        self._ssl_context: ssl.SSLContext | None = None
 
     def _get_ssl_context(self) -> ssl.SSLContext:
         """Get or create SSL context with client certificates."""
@@ -35,7 +35,7 @@ class KVMClient:
             )
         return self._ssl_context
 
-    def _request(self, device: Device, method: str, path: str, data: Optional[dict] = None) -> Any:
+    def _request(self, device: Device, method: str, path: str, data: dict | None = None) -> Any:
         """Make an HTTP request to the KVM device."""
         url = f"{device.url}{path}"
 
@@ -45,7 +45,9 @@ class KVMClient:
         request = urllib.request.Request(url, data=body, headers=headers, method=method)
 
         try:
-            with urllib.request.urlopen(request, context=self._get_ssl_context(), timeout=30) as response:
+            with urllib.request.urlopen(
+                request, context=self._get_ssl_context(), timeout=30
+            ) as response:
                 content_type = response.headers.get("Content-Type", "")
                 if "application/json" in content_type:
                     return json.loads(response.read().decode())
@@ -54,13 +56,13 @@ class KVMClient:
         except urllib.error.HTTPError as e:
             try:
                 error_body = json.loads(e.read().decode())
-                raise KVMClientError(f"HTTP {e.code}: {error_body.get('error', str(e))}")
+                raise KVMClientError(f"HTTP {e.code}: {error_body.get('error', str(e))}") from e
             except json.JSONDecodeError:
-                raise KVMClientError(f"HTTP {e.code}: {e.reason}")
+                raise KVMClientError(f"HTTP {e.code}: {e.reason}") from e
         except urllib.error.URLError as e:
-            raise KVMClientError(f"Connection failed: {e.reason}")
+            raise KVMClientError(f"Connection failed: {e.reason}") from e
         except ssl.SSLError as e:
-            raise KVMClientError(f"SSL error: {e}")
+            raise KVMClientError(f"SSL error: {e}") from e
 
     def _get_device(self, device_id: str) -> Device:
         """Get device by ID, raising error if not found."""
@@ -89,8 +91,8 @@ class KVMClient:
         device_id: str,
         button: str = "left",
         double: bool = False,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
+        x: int | None = None,
+        y: int | None = None,
     ) -> dict:
         """Click mouse button."""
         device = self._get_device(device_id)
@@ -111,7 +113,7 @@ class KVMClient:
         device = self._get_device(device_id)
         return self._request(device, "POST", "/keyboard/type", {"text": text})
 
-    def keyboard_press(self, device_id: str, key: str, modifiers: Optional[list[str]] = None) -> dict:
+    def keyboard_press(self, device_id: str, key: str, modifiers: list[str] | None = None) -> dict:
         """Press a key or key combination."""
         device = self._get_device(device_id)
         data = {"key": key}

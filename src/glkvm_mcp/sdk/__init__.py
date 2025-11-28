@@ -1,16 +1,8 @@
-"""GLKVM MCP Server - Control KVM devices via MCP protocol."""
+"""GLKVM SDK - Python SDK for controlling KVM devices."""
 
-__version__ = "0.1.0"
-
-# SDK exports for convenient access
-from .sdk import (
-    KVM,
-    KVMConnectionError,
-    KVMDeviceNotFoundError,
-    # Exceptions
-    KVMError,
-    # Classes
-    Screenshot,
+from .exceptions import KVMConnectionError, KVMDeviceNotFoundError, KVMError
+from .kvm import KVM
+from .module import (
     click,
     double_click,
     get_device,
@@ -18,10 +10,10 @@ from .sdk import (
     move,
     screenshot,
     scroll,
-    # Module functions
     set_device,
     type_text,
 )
+from .screenshot import Screenshot
 
 __all__ = [
     "KVM",
@@ -29,7 +21,6 @@ __all__ = [
     "KVMDeviceNotFoundError",
     "KVMError",
     "Screenshot",
-    "__version__",
     "click",
     "double_click",
     "get_device",

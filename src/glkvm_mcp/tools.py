@@ -1,21 +1,16 @@
 """MCP tool definitions and handlers."""
 
 import base64
-import io
-from typing import Any, Optional
+from typing import Any
 
-from PIL import Image
-
+from .client import KVMClient
 from .config import Config
-from .client import KVMClient, KVMClientError
 from .ocr import (
-    OCRError,
-    process_screenshot,
-    ocr_screenshot,
     find_text,
+    ocr_screenshot,
     pixel_to_hid,
+    process_screenshot,
 )
-
 
 # Tool definitions for MCP
 TOOLS = [
@@ -78,6 +73,18 @@ TOOLS = [
                     "type": "string",
                     "description": "ID of the KVM device",
                 },
+                "max_width": {
+                    "type": "integer",
+                    "description": "Maximum width for output image (default: 1280)",
+                },
+                "max_height": {
+                    "type": "integer",
+                    "description": "Maximum height for output image (default: 720)",
+                },
+                "quality": {
+                    "type": "integer",
+                    "description": "JPEG quality 1-100 (default: 70)",
+                },
             },
             "required": ["device_id"],
         },
@@ -91,6 +98,18 @@ TOOLS = [
                 "device_id": {
                     "type": "string",
                     "description": "ID of the KVM device",
+                },
+                "max_width": {
+                    "type": "integer",
+                    "description": "Maximum width for output image (default: 1280)",
+                },
+                "max_height": {
+                    "type": "integer",
+                    "description": "Maximum height for output image (default: 720)",
+                },
+                "quality": {
+                    "type": "integer",
+                    "description": "JPEG quality 1-100 (default: 70)",
                 },
             },
             "required": ["device_id"],
@@ -292,27 +311,45 @@ class ToolHandler:
     def _handle_kvm_capture_screen(self, args: dict) -> dict:
         """Capture a screenshot."""
         device_id = args["device_id"]
+        max_width = args.get("max_width", 1280)
+        max_height = args.get("max_height", 720)
+        quality = args.get("quality", 70)
+
         h264_data = self.client.capture_screenshot(device_id)
-        jpeg_data, image = process_screenshot(h264_data)
+        jpeg_data, resized_image, original_image = process_screenshot(
+            h264_data, max_width=max_width, max_height=max_height, quality=quality
+        )
 
         return {
             "image": base64.b64encode(jpeg_data).decode(),
-            "width": image.width,
-            "height": image.height,
+            "width": resized_image.width,
+            "height": resized_image.height,
+            "original_width": original_image.width,
+            "original_height": original_image.height,
             "format": "jpeg",
         }
 
     def _handle_kvm_screenshot_with_ocr(self, args: dict) -> dict:
         """Capture screenshot with OCR."""
         device_id = args["device_id"]
+        max_width = args.get("max_width", 1280)
+        max_height = args.get("max_height", 720)
+        quality = args.get("quality", 70)
+
         h264_data = self.client.capture_screenshot(device_id)
-        jpeg_data, image = process_screenshot(h264_data)
-        ocr_result = ocr_screenshot(h264_data)
+
+        # Get resized image for return, but OCR uses original for accuracy
+        jpeg_data, resized_image, original_image = process_screenshot(
+            h264_data, max_width=max_width, max_height=max_height, quality=quality
+        )
+        ocr_result, _ = ocr_screenshot(h264_data)
 
         return {
             "image": base64.b64encode(jpeg_data).decode(),
-            "width": image.width,
-            "height": image.height,
+            "width": resized_image.width,
+            "height": resized_image.height,
+            "original_width": original_image.width,
+            "original_height": original_image.height,
             "format": "jpeg",
             "text": ocr_result.text,
             "boxes": ocr_result.boxes,
@@ -324,10 +361,9 @@ class ToolHandler:
         search_text = args["text"]
         should_click = args.get("click", True)
 
-        # Get screenshot and OCR
+        # Get screenshot and OCR (uses original image for accuracy)
         h264_data = self.client.capture_screenshot(device_id)
-        jpeg_data, image = process_screenshot(h264_data)
-        ocr_result = ocr_screenshot(h264_data)
+        ocr_result, original_image = ocr_screenshot(h264_data)
 
         # Find matching text
         matches = find_text(ocr_result.boxes, search_text)
@@ -336,8 +372,8 @@ class ToolHandler:
             "search_text": search_text,
             "matches_found": len(matches),
             "matches": matches,
-            "screen_width": image.width,
-            "screen_height": image.height,
+            "screen_width": original_image.width,
+            "screen_height": original_image.height,
             "clicked": False,
         }
 
@@ -347,8 +383,8 @@ class ToolHandler:
             hid_x, hid_y = pixel_to_hid(
                 match["center_x"],
                 match["center_y"],
-                image.width,
-                image.height,
+                original_image.width,
+                original_image.height,
             )
             self.client.mouse_click(device_id, x=hid_x, y=hid_y)
             result["clicked"] = True
