@@ -1,12 +1,12 @@
 #!/bin/bash
 # Setup script for GLKVM HID Server on KVM devices
-# Download and run: curl -sSL https://raw.githubusercontent.com/davewking/glkvm-mcp/main/scripts/setup_kvm.sh | bash
+# Download and run: curl -sSL https://raw.githubusercontent.com/sk3tch/glkvm-mcp/main/scripts/setup_kvm.sh | bash
 
 set -e
 
 GLKVM_DIR="/etc/glkvm"
 CERTS_DIR="$GLKVM_DIR/certs"
-HID_SERVER_URL="https://raw.githubusercontent.com/davewking/glkvm-mcp/main/kvm/hid_server.py"
+HID_SERVER_URL="https://raw.githubusercontent.com/sk3tch/glkvm-mcp/main/kvm/hid_server.py"
 SERVICE_NAME="glkvm-hid"
 
 echo "=== GLKVM HID Server Setup ==="

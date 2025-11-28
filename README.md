@@ -28,7 +28,7 @@ A Python MCP server for controlling KVM devices directly over HTTPS with mutual 
 
 ```bash
 # Clone the repository
-git clone https://github.com/davewking/glkvm-mcp.git
+git clone https://github.com/sk3tch/glkvm-mcp.git
 cd glkvm-mcp
 
 # Install Python dependencies
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 On each KVM device:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/davewking/glkvm-mcp/main/scripts/setup_kvm.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/sk3tch/glkvm-mcp/main/scripts/setup_kvm.sh | sudo bash
 ```
 
 The script will:
