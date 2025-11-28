@@ -1,0 +1,32 @@
+# Config with real data
+config.yaml
+
+# Certificates
+*.crt
+*.key
+*.pem
+*.csr
+certs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

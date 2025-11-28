@@ -1,0 +1,17 @@
+# GLKVM MCP Server Configuration
+# Copy to ~/.config/glkvm-mcp/config.yaml and customize
+
+# Certificate directory (optional, defaults shown)
+# Can also set via GLKVM_CERTS_DIR environment variable
+certs_dir: ~/.config/glkvm-mcp/certs
+
+# Default port for KVM devices
+default_port: 8443
+
+# KVM devices
+devices:
+  # Example device - replace with your actual KVMs
+  kvm-example:
+    ip: 192.168.1.100
+    port: 8443              # optional, uses default_port
+    name: "Example KVM"     # optional friendly name

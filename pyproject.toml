@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glkvm-mcp"
+version = "0.1.0"
+description = "MCP server for controlling KVM devices"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Dave King", email = "dave@davewking.com"}
+]
+dependencies = [
+    "pytesseract>=0.3.10",
+    "Pillow>=10.0.0",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+glkvm-mcp = "glkvm_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
