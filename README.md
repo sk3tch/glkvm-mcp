@@ -1,6 +1,6 @@
 # GLKVM MCP Server
 
-A Python MCP server for controlling KVM devices directly over HTTPS with mutual TLS (client certificate) authentication.
+A Python MCP server for controlling KVM devices directly over HTTPS with mutual TLS (client certificate) authentication.  This allows Claude and other agents to drive GUIs on other computers.  This opens up being able to drive GUIs on places where Claude isn't installed, or can't be installed.  For example, if you wanted to have Claude help you automate an OS install or BIOS configuration, you could do that.  There's of course the question of _should_ you do that.  As a security person it was somewhat terrifying to see how easy this was to build and how well it works.
 
 ## Features
 
