@@ -11,13 +11,40 @@ DEFAULT_PORT = 8443
 
 
 class Device:
-    """Represents a KVM device."""
+    """Represents a KVM device.
 
-    def __init__(self, device_id: str, ip: str, port: int = DEFAULT_PORT, name: str | None = None):
+    Two backends are supported:
+
+    * ``hid-server`` (default) - the HID server shipped with this project,
+      authenticated with mutual TLS.
+    * ``kvmd`` - PiKVM / KVMD devices, authenticated with the
+      ``X-KVMD-User`` / ``X-KVMD-Passwd`` headers.
+    """
+
+    def __init__(
+        self,
+        device_id: str,
+        ip: str,
+        port: int = DEFAULT_PORT,
+        name: str | None = None,
+        kind: str = "hid-server",
+        scheme: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+    ):
         self.device_id = device_id
         self.ip = ip
         self.port = port
         self.name = name or device_id
+        self.kind = kind or "hid-server"
+        self.username = username
+        self.password = password
+        if scheme:
+            self.scheme = scheme
+        elif self.kind == "kvmd":
+            self.scheme = "http"
+        else:
+            self.scheme = "https"
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -26,12 +53,20 @@ class Device:
             d["port"] = self.port
         if self.name != self.device_id:
             d["name"] = self.name
+        if self.kind != "hid-server":
+            d["kind"] = self.kind
+        if self.scheme != ("http" if self.kind == "kvmd" else "https"):
+            d["scheme"] = self.scheme
+        if self.username:
+            d["username"] = self.username
+        if self.password:
+            d["password"] = self.password
         return d
 
     @property
     def url(self) -> str:
         """Get the base URL for this device."""
-        return f"https://{self.ip}:{self.port}"
+        return f"{self.scheme}://{self.ip}:{self.port}"
 
 
 class Config:
@@ -68,6 +103,10 @@ class Config:
                 ip=device_data["ip"],
                 port=device_data.get("port", self.default_port),
                 name=device_data.get("name"),
+                kind=device_data.get("kind", "hid-server"),
+                scheme=device_data.get("scheme"),
+                username=device_data.get("username"),
+                password=device_data.get("password"),
             )
 
     def save(self) -> None:
