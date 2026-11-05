@@ -15,3 +15,12 @@ devices:
     ip: 192.168.1.100
     port: 8443              # optional, uses default_port
     name: "Example KVM"     # optional friendly name
+
+  # PiKVM / KVMD device (uses the KVMD HTTP API and X-KVMD-User headers
+  # instead of mutual TLS; default scheme is http and default port 80)
+  # pikvm-example:
+  #   ip: 192.168.1.50
+  #   port: 80
+  #   kind: kvmd
+  #   username: admin
+  #   password: admin

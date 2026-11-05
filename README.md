@@ -2,6 +2,45 @@
 
 A Python MCP server for controlling KVM devices directly over HTTPS with mutual TLS (client certificate) authentication.  This allows Claude and other agents to drive GUIs on other computers.  This opens up being able to drive GUIs on places where Claude isn't installed, or can't be installed.  For example, if you wanted to have Claude help you automate an OS install or BIOS configuration, you could do that.  There's of course the question of _should_ you do that.  As a security person it was somewhat terrifying to see how easy this was to build and how well it works.
 
+## Supported devices
+
+### HID servers (default)
+
+The HID server shipped with this project (see `kvm/hid_server.py`), authenticated
+with mutual TLS.
+
+### PiKVM / KVMD
+
+PiKVM devices speak their own HTTP API and authenticate with the
+`X-KVMD-User` / `X-KVMD-Passwd` headers. Add `kind: kvmd` to a device to use it:
+
+```yaml
+devices:
+  pikvm:
+    ip: 192.168.1.50
+    port: 80
+    kind: kvmd
+    username: admin
+    password: admin
+```
+
+Endpoint mapping:
+
+| Action | HID server | PiKVM / KVMD |
+|---|---|---|
+| Screenshot | `GET /screenshot` | `GET /api/streamer/snapshot` |
+| Health | `GET /health` | `GET /api/streamer/state` |
+| Key press | `POST /keyboard/press` | `POST /api/hid/events/send_key` |
+| Type text | `POST /keyboard/type` | `POST /api/hid/events/send_text` |
+| Mouse move | `POST /mouse/move` | `POST /api/hid/events/send_mouse` (`move`) |
+| Mouse click | `POST /mouse/click` | `POST /api/hid/events/send_mouse` (`click`) |
+| Mouse scroll | `POST /mouse/scroll` | `POST /api/hid/events/send_mouse` (`wheel`) |
+
+Note that the KVMD API only accepts *relative* mouse movement, while the MCP
+tools expose absolute coordinates (0-32767). The client converts absolute
+coordinates into relative deltas by tracking the last known pointer position
+per device.
+
 ## Features
 
 - **Direct connection** - No proxy server, connects directly to KVM devices
